@@ -1,0 +1,44 @@
+@apiUrl = https://localhost:44308/api/basket
+@customerId = 888E9C20-0401-4D6B-BC39-4F5F203C8A5A
+@basketId = 4acd7b7b-4ac7-4714-b74f-bcd3b82b0dd1
+@productId = fa1c4a1e-c99e-4d5c-9969-2d51f60cd402
+
+
+### Create new customer basket
+POST {{apiUrl}}/createbasket
+Content-Type: application/json
+
+{
+  "basketId": "",
+  "buyerId": "4acd7b7b-4ac7-4714-b74f-bcd3b82b0dd1"
+}
+
+
+### Get the customer's basket
+GET {{apiUrl}}/{{customerId}}
+
+
+### Add product to customer's basket
+POST {{apiUrl}}/{{customerId}}/addproduct
+Content-Type: application/json
+
+{
+  "basketId": "{{basketId}}",
+  "productId": "{{productId}}",
+  "quantity": 2
+}
+
+
+### Checkout basket
+POST {{apiUrl}}/{{customerId}}/checkout
+Content-Type: application/json
+
+{
+  "basketId": "{{basketId}}",
+  "shippingType": 2,
+  "shippingAddress": "7AFBDF54-66DB-41CE-95BD-625247B561BF"
+}
+
+
+
+
