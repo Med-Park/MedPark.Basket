@@ -4,9 +4,15 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- dev
-- master
-- feature/*
+  branches:
+    include:
+      - master
+      - dev
+
+pr:
+  branches:
+    include:
+      - dev
 
 pool:
   vmImage: 'Ubuntu-16.04' 
@@ -15,7 +21,8 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-  proj-path: 'src/MedPark.Basket.csproj'
+  proj-path: 'src/'
+  imageTag: ''
 
 steps:
 - task: NuGetToolInstaller@1
@@ -53,9 +60,10 @@ steps:
     command: 'build'
     projects: '$(proj-path)'
     arguments: '-c Release'
-  enabled: false
+  enabled: true
 
 - task: Docker@2
+  condition: and(succeeded(), or(eq(variables['build.SourceBranch'], 'refs/heads/dev'), eq(variables['build.SourceBranch'], 'refs/heads/master')))
   displayName: 'Login to Docker Hub'
   inputs:
     containerRegistry: 'docker-hub-connection'
@@ -74,16 +82,18 @@ steps:
       Write-Host ##vso[task.setvariable variable=imageTag]dev
     }
   displayName: 'Set Docker image tag based on branch'
-  enabled: false
+  condition: and(succeeded(), or(eq(variables['build.SourceBranch'], 'refs/heads/dev'), eq(variables['build.SourceBranch'], 'refs/heads/master')))
+  enabled: true
 
 - task: Docker@2
   displayName: 'Build and Push docker image'
+  condition: and(succeeded(), or(eq(variables['build.SourceBranch'], 'refs/heads/dev'), eq(variables['build.SourceBranch'], 'refs/heads/master')))
   inputs:
     containerRegistry: 'docker-hub-connection'
     repository: 'geradedev/medpark-basket'
     command: 'buildAndPush'
     Dockerfile: 'src/MedPark.Basket/Dockerfile.multistage'
-    tags: dev
+    tags: $(imageTag)
   enabled: true
 
 - task: PublishBuildArtifacts@1
@@ -92,4 +102,4 @@ steps:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'drop'
     publishLocation: 'Container'
-  enabled: true
+  enabled: false
