@@ -21,7 +21,7 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
-  proj-path: 'src/'
+  proj-path: 'src'
   imageTag: ''
 
 steps:
@@ -39,7 +39,7 @@ steps:
 - task: NuGetCommand@2
   displayName: 'Restore NuGet packages for project'
   inputs:
-    restoreSolution: '$(proj-path)'
+    restoreSolution: '$(proj-path)/MedPark.Basket.csproj'
   enabled: true
 
 - task: CmdLine@2
@@ -51,14 +51,14 @@ steps:
 - task: CmdLine@2
   displayName: 'Generate DB migration script for MedPark.Basket'
   inputs:
-    script: 'dotnet ef migrations script --project $(proj-path) -i -o $(build.artifactstagingdirectory)/sql/MedPark.Basket_DB_Migrations.sql'
-  enabled: true
+    script: 'dotnet ef migrations script --project $(proj-path)/MedPark.Basket.csproj -i -o $(build.artifactstagingdirectory)/sql/MedPark.Basket_DB_Migrations.sql'
+  enabled: false
 
 - task: DotNetCoreCLI@2
   displayName: 'Build project'
   inputs:
     command: 'build'
-    projects: '$(proj-path)'
+    projects: '$(proj-path)/MedPark.Basket.csproj'
     arguments: '-c Release'
   enabled: true
 
