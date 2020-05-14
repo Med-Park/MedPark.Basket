@@ -40,24 +40,24 @@ namespace MedPark.Basket.Handlers.Basket
 
 
             BasketCheckedOut basketCheckedOutEvent = new BasketCheckedOut(basket.CustomerId, command.ShippingType, command.ShippingAddress);
-            //List<LineItemDto> lineItems = new List<LineItemDto>();
+            List<LineItemDto> lineItems = new List<LineItemDto>();
 
-            //items.ToList().ForEach(async (i) =>
-            //{
-            //    Product p = await _productRepo.GetAsync(i.ProductId);
+            IEnumerable<Product> products = await _productRepo.FindAsync(x => items.Select(x => x.ProductId).ToList().Contains(x.Id));
 
-            //    LineItemDto lineItem = new LineItemDto { Id = Guid.NewGuid(), ProductCode = p.Code, Price = p.Price, ProductName = p.Name, Quantity = i.Quantity };
-            //    lineItems.Add(lineItem);
-            //});
+            products.ToList().ForEach((p) =>
+            {
+                int quantity = items.Where(x => x.ProductId == p.Id).Select(x => x.Quantity).FirstOrDefault();
+                LineItemDto lineItem = new LineItemDto { Id = Guid.NewGuid(), ProductCode = p.Code, Price = p.Price, ProductName = p.Name, Quantity = quantity };
+                lineItems.Add(lineItem);
+            });
 
-            //basketCheckedOutEvent.Items = lineItems;
+            basketCheckedOutEvent.Items = lineItems;
 
             //Publish event to start order
             await _busPublisher.PublishAsync(basketCheckedOutEvent, null);
 
             //Empty basket
             //await _basketItemRepo.DeleteAllAsync(x => x.BasketId == command.BasketId);
-
 
             //TODO: Update Cache with empty basket
         }
