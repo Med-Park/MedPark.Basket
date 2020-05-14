@@ -40,17 +40,17 @@ namespace MedPark.Basket.Handlers.Basket
 
 
             BasketCheckedOut basketCheckedOutEvent = new BasketCheckedOut(basket.CustomerId, command.ShippingType, command.ShippingAddress);
-            List<LineItemDto> lineItems = new List<LineItemDto>();
+            //List<LineItemDto> lineItems = new List<LineItemDto>();
 
-            items.ToList().ForEach(async (i) =>
-            {
-                Product p = await _productRepo.GetAsync(i.ProductId);
+            //items.ToList().ForEach(async (i) =>
+            //{
+            //    Product p = await _productRepo.GetAsync(i.ProductId);
 
-                LineItemDto lineItem = new LineItemDto { Id = Guid.NewGuid(), ProductCode = p.Code, Price = p.Price, ProductName = p.Name, Quantity = i.Quantity };
-                lineItems.Add(lineItem);
-            });
+            //    LineItemDto lineItem = new LineItemDto { Id = Guid.NewGuid(), ProductCode = p.Code, Price = p.Price, ProductName = p.Name, Quantity = i.Quantity };
+            //    lineItems.Add(lineItem);
+            //});
 
-            basketCheckedOutEvent.Items = lineItems;
+            //basketCheckedOutEvent.Items = lineItems;
 
             //Publish event to start order
             await _busPublisher.PublishAsync(basketCheckedOutEvent, null);
