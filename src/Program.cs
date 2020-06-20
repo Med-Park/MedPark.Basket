@@ -1,4 +1,5 @@
 ﻿using Autofac.Extensions.DependencyInjection;
+using MedPark.Common.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using System.IO;
@@ -20,7 +21,6 @@ namespace MedPark.Basket
                     webBuilder.UseContentRoot(Directory.GetCurrentDirectory())
                     .UseIISIntegration()
                     .UseStartup<Startup>();
-                });
-                //.UseLogging();
+                }).UseLogging();
     }
 }
