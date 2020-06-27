@@ -20,8 +20,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AutoMapper;
 using MedPark.Basket.Messaging.Events;
-using Microsoft.Extensions.Hosting;
 using MedPark.Common.Redis;
+using MedPark.Common.Consul;
+using Consul;
+using Microsoft.Extensions.Hosting;
 
 namespace MedPark.Basket
 {
@@ -38,9 +40,10 @@ namespace MedPark.Basket
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHealthChecks();
             services.AddAutoMapper(typeof(Startup));
-
             services.AddRedis(Configuration);
+            services.AddConsul();
 
             //Add DBContext
             services.AddDbContext<BasketDBContext>(options => options.UseSqlServer(Configuration["Database:ConnectionString"]));
@@ -60,7 +63,7 @@ namespace MedPark.Basket
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime appLifetime, IConsulClient consulClient)
         {
             if (env.IsDevelopment())
             {
@@ -72,6 +75,12 @@ namespace MedPark.Basket
                 app.UseHsts();
             }
 
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapHealthChecks("/health");
+            });
+
             app.UseHttpsRedirection();
 
             app.UseRabbitMq()
@@ -79,6 +88,14 @@ namespace MedPark.Basket
                 .SubscribeCommand<AddProductToBasket>()
                 .SubscribeCommand<CheckoutBasket>()
                 .SubscribeEvent<CustomerCreated>(@namespace: "customers");
+
+            var consulSrvcId = app.UseConsul();
+
+            appLifetime.ApplicationStopped.Register(() =>
+            {
+                consulClient.Agent.ServiceDeregister(consulSrvcId);
+                Container.Dispose();
+            });
 
             app.UseMvcWithDefaultRoute();
         }
