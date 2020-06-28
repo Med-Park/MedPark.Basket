@@ -1,7 +1,9 @@
-﻿using MedPark.Basket.Domain;
+﻿using Consul;
+using MedPark.Basket.Domain;
 using MedPark.Basket.Messaging.Commands;
 using MedPark.Basket.Queries;
 using MedPark.Common;
+using MedPark.Common.Consul;
 using MedPark.Common.Dispatchers;
 using MedPark.Common.Handlers;
 using MedPark.Common.RabbitMq;
@@ -23,14 +25,16 @@ namespace MedPark.Basket.Handlers.Basket
         private readonly IResponseCacheService _cacheService;
 
         private IDispatcher _dispatcher { get; }
+        private IConsulHttpClient _consulHttpClient { get; }
 
-        public AddProductToBasketHandler(IMedParkRepository<CustomerBasket> basketRepo, IMedParkRepository<BasketItem> itemRepo, IMedParkRepository<Product> productRepo, IResponseCacheService cacheService, IDispatcher dispatcher)
+        public AddProductToBasketHandler(IMedParkRepository<CustomerBasket> basketRepo, IMedParkRepository<BasketItem> itemRepo, IMedParkRepository<Product> productRepo, IResponseCacheService cacheService, IDispatcher dispatcher, IConsulHttpClient consulHttpClient)
         {
             _basketRepo = basketRepo;
             _itemRepo = itemRepo;
             _productRepo = productRepo;
 
             _dispatcher = dispatcher;
+            _consulHttpClient = consulHttpClient;
 
             //Cache
             _cacheService = cacheService;
@@ -47,7 +51,10 @@ namespace MedPark.Basket.Handlers.Basket
 
             if (prod is null)
                 throw new MedParkException("prod_does_not_exist", $"The product {command.ProductId} does not exist. Please try again later.");
-            else if(prod.AvailableQuantity == 0)
+
+            var isAvailable = await _consulHttpClient.GetAsync<bool>($"catalog-service/product/isproductavailable/{command.ProductId}");
+
+            if (!isAvailable)
                 throw new MedParkException("prod_insufficient_quantity", $"The product {prod.Name} is currently not available.");
 
             BasketItem bItem = await _itemRepo.GetAsync(x => x.BasketId == basket.Id && x.ProductId == command.ProductId);
