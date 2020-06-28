@@ -30,7 +30,6 @@ namespace MedPark.Basket
     public class Startup
     {
         public IConfiguration Configuration { get; }
-        public IContainer Container { get; private set; }
 
         public Startup(IWebHostEnvironment env)
         {
@@ -94,7 +93,6 @@ namespace MedPark.Basket
             appLifetime.ApplicationStopped.Register(() =>
             {
                 consulClient.Agent.ServiceDeregister(consulSrvcId);
-                Container.Dispose();
             });
 
             app.UseMvcWithDefaultRoute();
