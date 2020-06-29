@@ -20,7 +20,7 @@ pool:
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  buildConfiguration: 'Debug'
   proj-path: 'src'
   imageTag: ''
 
@@ -59,7 +59,7 @@ steps:
   inputs:
     command: 'build'
     projects: '$(proj-path)/MedPark.Basket.csproj'
-    arguments: '-c Release'
+    arguments: '-c $(buildConfiguration)'
   enabled: true
 
 - task: Docker@2
@@ -83,7 +83,7 @@ steps:
     }
   displayName: 'Set Docker image tag based on branch'
   condition: and(succeeded(), or(eq(variables['build.SourceBranch'], 'refs/heads/dev'), eq(variables['build.SourceBranch'], 'refs/heads/master')))
-  enabled: true
+  enabled: false
 
 - task: Docker@2
   displayName: 'Build and Push docker image'
@@ -94,7 +94,7 @@ steps:
     command: 'buildAndPush'
     Dockerfile: '$(proj-path)/Dockerfile.multistage'
     tags: $(imageTag)
-  enabled: true
+  enabled: false
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish build artifacts'
